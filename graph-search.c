@@ -18,7 +18,7 @@ void quit_graph();
 
 int check[MAX_VERTEX] = {0,};               // dfs, bfs를 사용할때 vertex를 방문했는지 확인하기 위한 check 배열 생성
 
-int main(){
+int main(){                                 // main 함수는 이전 과제를 참고했습니다.
     char command;
     Graph *gra = NULL;
     int v1, v2;
@@ -69,9 +69,9 @@ int main(){
 
 Graph* init_graph(Graph* graph){
     if(graph != NULL){
-        free(graph);
+        free(graph);                            // graph가 NULL 이 아니면 할당을 해제한다.
     }
-    graph = (Graph*)malloc(sizeof(Graph));
+    graph = (Graph*)malloc(sizeof(Graph));      // graph를 동적으로 할당한다.
     for(int i = 0 ; i < MAX_VERTEX ; i++){
         graph->v[i]=0;                          // v 배열을 다 0으로 초기화한다.
     }
