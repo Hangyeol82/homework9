@@ -3,24 +3,65 @@
 
 #define MAX_VERTEX 10
 
-typedef struct Graph{
-    int v[MAX_VERTEX];                      // 생성된 vertex를 배열에서 1로 표현하려고 한다.
-    int edge[MAX_VERTEX][MAX_VERTEX];       // edge를 2차원 배열에서 1로 표현하려고 한다
-} Graph;
+typedef struct node{
+    int v;
+    struct node *next;
+}node;
 
-Graph* init_graph(Graph *);                 // graph initalize 하는 함수
-void insert_vertex(Graph * , int);          // vertex를 생성하는 함수
-void insert_edge(Graph*, int, int);         // edge를 생성하는 함수
-void dfs(Graph*, int);
-void bfs();
-void print_graph();
+typedef struct head{
+    node *h; 
+}head;
+
+typedef struct graph{
+    head *list;
+}graph;
+
+#define MAX_QUEUE_SIZE 30
+
+int queue[MAX_QUEUE_SIZE];
+int rear = 0;
+int front = 0;
+
+int is_empty(){
+    if(rear == front) return 1;
+    else return 0;
+}
+
+int is_full(){
+    if(front == MAX_QUEUE_SIZE) return 1;
+    else return 0;
+}
+
+int dequeue() {
+    if (front == rear) {
+        printf("Queue is empty\n");
+        return -1;
+    }
+    int item = queue[front];
+    front = (front + 1) % MAX_QUEUE_SIZE;
+    return item;
+}
+
+void enqueue(int item) {
+    if ((rear + 1) % MAX_QUEUE_SIZE == front) {
+        printf("Queue is full\n");
+        return;
+    }
+    queue[rear] = item;
+    rear = (rear + 1) % MAX_QUEUE_SIZE;
+}
+
+graph* init_graph(graph *);                 // graph initalize 하는 함수
+void insert_vertex(graph * , int);          // vertex를 생성하는 함수
+void insert_edge(graph*, int, int);         // edge를 생성하는 함수
+void dfs(graph*, int);
+void bfs(graph*,int);
+void print_graph(graph *);
 void quit_graph();
-
-int check[MAX_VERTEX] = {0,};               // dfs, bfs를 사용할때 vertex를 방문했는지 확인하기 위한 check 배열 생성
 
 int main(){                                 // main 함수는 이전 과제를 참고했습니다.
     char command;
-    Graph *gra = NULL;
+    graph *gra = NULL;
     int v1, v2;
     int start;
     do{
@@ -52,12 +93,23 @@ int main(){                                 // main 함수는 이전 과제를 �
             printf("Insert starting number: ");
             scanf("%d", &start);
             dfs(gra, start);
-            for(int i = 0 ; i < MAX_VERTEX ; i++){
-                check[i] = 0;                           // check 배열 0으로 초기화
-            }
             printf("\n");
+            for(int i = 0 ; i < MAX_QUEUE_SIZE ; i++) queue[i] = 0;
+            front = 0;
+            rear = 0;
+            break;
         case 'b': case 'B':
+            printf("Insert starting number: ");
+            scanf("%d", &start);
+            bfs(gra, start);
+            printf("\n");
+            for(int i = 0 ; i < MAX_QUEUE_SIZE ; i++) queue[i] = 0;
+            front = 0;
+            rear = 0;
+            break;
         case 'p': case 'P':
+            print_graph(gra);
+            break;
         case 'q': case 'Q':
             break;
         default:
@@ -67,37 +119,131 @@ int main(){                                 // main 함수는 이전 과제를 �
     }while(command != 'q' && command != 'Q');
 }
 
-Graph* init_graph(Graph* graph){
-    if(graph != NULL){
-        free(graph);                            // graph가 NULL 이 아니면 할당을 해제한다.
+graph* init_graph(graph* g){
+    if(g != NULL){
+        for(int i = 0; i < MAX_VERTEX; i++){
+            free(g->list[i].h);
+        }
+        free(g->list);
+        free(g);
     }
-    graph = (Graph*)malloc(sizeof(Graph));      // graph를 동적으로 할당한다.
+    g = (graph*)malloc(sizeof(graph));
+    g->list = (head*)malloc(sizeof(head)*MAX_VERTEX);
     for(int i = 0 ; i < MAX_VERTEX ; i++){
-        graph->v[i]=0;                          // v 배열을 다 0으로 초기화한다.
+        g->list[i].h = NULL;
     }
-    for(int i = 0 ; i < MAX_VERTEX ; i++){
-        for(int j = 0 ; j < MAX_VERTEX ; j++){
-            graph->edge[i][j] = 0;              // edge 배열도 다 0으로 초기화한다.
+    return g;
+}
+
+void insert_vertex(graph* g, int n){
+    if (n < 0 || n > 9) {
+        printf("Wrong Number!\n");
+        return;
+    }
+    g->list[n].h = (node*)malloc(sizeof(node));
+    g->list[n].h->v = n;
+    g->list[n].h->next = NULL;
+}
+
+void insert_edge(graph* g, int v1, int v2){ 
+    if(v1 == v2) return;
+    node* point = g->list[v1].h;
+    node* pre = NULL;
+    node* new1 = (node*)malloc(sizeof(node));
+    new1->v = v2;
+    new1->next = NULL;
+    node* new2 = (node*)malloc(sizeof(node));
+    new2->v = v1;
+    new2->next = NULL;
+    int i = 0;
+    while(1){
+        i++;
+        if(point->next == NULL){
+            point->next = new1;
+            break;
+        }
+        else if(point->v > v2 && i != 1){         // 크기가 작은 순으로 연결하기 위해
+            pre->next = new1;
+            new1->next = point;
+            break;
+        }
+        else if(point->v == v2) break;
+        pre = point;
+        point = point->next;
+    }
+    point = g->list[v2].h;
+    pre =  NULL;
+    i = 0;
+    while(1){
+        i++;
+        if(point->next == NULL){        
+            point->v = v1;
+            point->next = new2;
+            break;
+        }
+        else if(point->v > v1 && i != 1){         // 크기가 작은 순으로 연결하기 위해
+            pre->next = new2;
+            new2->next = point;
+            break;
+        }
+        else if(point->v == v1) break;
+        pre = point;
+        point = point->next;
+    }
+}
+
+void dfs(graph* g, int start){
+    int check[MAX_VERTEX] = {0,};        // 방문했는지 확인하기 위한 check 배열 생성
+    enqueue(start);
+    int current;
+    while(is_empty() != 1){
+        current = dequeue();
+        if(check[current] == 1) continue;
+        check[current] = 1;
+        printf("[%d] ", current);
+        node* point = g->list[current].h;
+        while(point != NULL){
+            if(check[point->v] == 0) {
+                enqueue(point->v);
+                break;
+            }
+            point = point->next;
         }
     }
-    return graph;
 }
 
-void insert_vertex(Graph* g, int n){
-    g->v[n-1] = 1;                          // n에 해당하는 배열 v 인덱스를 1로 바꿔준다.
-}
-
-void insert_edge(Graph* g, int v1, int v2){
-    g->edge[v1-1][v2-1] = 1;                
-    g->edge[v2-1][v1-1] = 1;                // 무방향 그래프이므로 양쪽으로 이어준다.
-}
-
-void dfs(Graph* g, int start){
-    check[start-1] = 1;                     // 방문한 vertex 기록 
-    printf("[%d] ", start);                 // 방문한 vertex 출력
-    for(int i = 0 ; i < MAX_VERTEX; i++){
-        if(g->edge[start-1][i] == 1 && check[i] != 1){      // edge가 연결되어 있고 방문하지 않은 vertex 일때
-            dfs(g, i+1);                    // recursive 방식으로 dfs 구현
+void bfs(graph *g , int start){
+    int check[MAX_VERTEX] = {0,};
+    node *point = g->list[start].h;
+    enqueue(start);
+    check[start] = 1;
+    while(is_empty() != 1){
+        start = dequeue();
+        point = g->list[start].h;
+        printf("[%d] ", start);
+        while(point!=NULL){
+            if(check[point->v] == 0) {
+                enqueue(point->v);
+                check[point->v] = 1;
+            }
+            point = point->next;
         }
+    }
+}
+
+void print_graph(graph *g){
+    for(int i = 0 ; i < MAX_VERTEX ; i++){
+        if(g->list[i].h == NULL) continue;
+        printf("vertex edge with %d vertex: ", i);
+        node* point = g->list[i].h;
+        if(point->next == NULL) printf("None\n");
+        else{
+            point= point->next;
+            while(point != NULL){
+                printf("%d ", point->v);
+                point=point->next;
+            }
+        }
+        printf("\n");
     }
 }
