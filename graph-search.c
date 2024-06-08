@@ -3,16 +3,16 @@
 
 #define MAX_VERTEX 10
 
-typedef struct node{
+typedef struct node{                    // 노드 구조체
     int v;
     struct node *next;
 }node;
 
-typedef struct head{
+typedef struct head{                    // 각 노드의 헤드 노드 구조체
     node *h; 
 }head;
 
-typedef struct graph{
+typedef struct graph{                   // 그래프 구조체
     head *list;
 }graph;
 
@@ -22,17 +22,17 @@ int queue[MAX_QUEUE_SIZE];
 int rear = 0;
 int front = 0;
 
-int is_empty(){
+int is_empty(){                     // 큐가 비었는지 확인
     if(rear == front) return 1;
     else return 0;
 }
 
-int is_full(){
+int is_full(){                      // 큐가 꽉 찼는지 확인
     if(front == MAX_QUEUE_SIZE) return 1;
     else return 0;
 }
 
-int dequeue() {
+int dequeue() {                     // dequeue 함수
     if (front == rear) {
         printf("Queue is empty\n");
         return -1;
@@ -42,7 +42,7 @@ int dequeue() {
     return item;
 }
 
-void enqueue(int item) {
+void enqueue(int item) {            // enqueue 함수
     if ((rear + 1) % MAX_QUEUE_SIZE == front) {
         printf("Queue is full\n");
         return;
@@ -56,17 +56,17 @@ void enqueue(int item) {
 int stack[MAX_STACK_SIZE];
 int top = -1;
 
-int is_empty_stack(){
+int is_empty_stack(){               // 스택이 비었는지 확인
     if(top == -1) return 1;
     else return 0;
 }
 
-int is_full_stack(){
+int is_full_stack(){                // 스택이 꽉 찼는지 확인
     if(top == MAX_STACK_SIZE) return 1;
     else return 0;
 }
 
-void push(int item){
+void push(int item){                // push 함수
     if(is_full_stack() == 1){
         printf("Stack is full\n");
         return;
@@ -74,7 +74,7 @@ void push(int item){
     stack[++top] = item;
 }
 
-int pop(){
+int pop(){                          // pop 함수
     if(is_empty_stack() == 1){
         printf("Stack is empty\n");
         return -1;
